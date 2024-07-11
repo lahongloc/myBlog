@@ -21,10 +21,12 @@ class SiteController {
 	// [POST] /khoa-hoc/luu-tru
 	store(req, res, next) {
 		// res.json(req.body);
-		const formData = req.body;
-		formData.image = `https://img.youtube.com/vi/${req.body.videoId}/sddefault.jpg`;
-		const course = new Course(formData);
-		course.save().then(() => res.redirect(`/`));
+		req.body.image = `https://img.youtube.com/vi/${req.body.videoId}/sddefault.jpg`;
+		const course = new Course(req.body);
+		course
+			.save()
+			.then(() => res.redirect(`/`))
+			.catch(next);
 		// course.save().then(() => res.redirect(`/khoa-hoc/${formData.slug}`));
 	}
 
@@ -44,6 +46,41 @@ class SiteController {
 		Course.updateOne({ _id: req.params.id }, req.body)
 			.then(() => res.redirect("/luu-tru/khoa-hoc-cua-toi"))
 			.catch(next);
+	}
+
+	// [DELETE] /khoa-hoc/:id/
+	// SOFT DELETION
+	delete(req, res, next) {
+		Course.delete({ _id: req.params.id })
+			.then(() => res.redirect("back"))
+			.catch(next);
+	}
+
+	// [PATCH] /khoa-hoc/:id/khoi-phucs
+	restore(req, res, next) {
+		Course.restore({ _id: req.params.id })
+			.then(() => res.redirect("back"))
+			.catch(next);
+	}
+
+	// [DELETE] /khoa-hoc/:id/xoa-vinh-vien
+	forceDelete(req, res, next) {
+		Course.deleteOne({ _id: req.params.id })
+			.then(() => res.redirect("back"))
+			.catch(next);
+	}
+
+	// [POST] /khoa-hoc/-xu-ly-xoa-nhieu
+	deleteMany(req, res, next) {
+		switch (req.body.action) {
+			case "delete":
+				Course.delete({ _id: { $in: req.body.courseIds } })
+					.then(() => res.redirect("back"))
+					.catch(next);
+				break;
+			default:
+				res.json({ message: "action is invalid!" });
+		}
 	}
 }
 module.exports = new SiteController();

@@ -6,6 +6,9 @@ const handlebars = require("express-handlebars");
 const app = express();
 const port = 3000;
 
+// SortMiddleware
+const SortMiddleware = require("./app/middlewares/SortMiddleware");
+
 const route = require("./routes");
 const db = require("./config/db");
 
@@ -14,7 +17,7 @@ db.connect();
 
 app.use(express.static(path.join(__dirname, "public")));
 
-// middleware
+// middleware for POST method
 app.use(
 	express.urlencoded({
 		extended: true,
@@ -23,6 +26,9 @@ app.use(
 app.use(express.json());
 
 app.use(methodOverride("_method"));
+
+// Custome middleware (apply SortMiddleware,..)
+app.use(SortMiddleware);
 
 // HTTP logger
 app.use(morgan("combined"));
@@ -34,6 +40,25 @@ app.engine(
 		extname: ".hbs",
 		helpers: {
 			sum: (a, b) => a + b,
+			sortable: (field, sort) => {
+				const sortType = field === sort.column ? sort.type : "default";
+
+				const icons = {
+					default: "fa-sort",
+					asc: "fa-arrow-down-a-z",
+					desc: "fa-arrow-down-z-a",
+				};
+
+				const types = {
+					default: "desc",
+					asc: "desc",
+					desc: "asc",
+				};
+
+				const icon = icons[sortType];
+				const type = types[sortType];
+				return `<a href="?_sort&column=${field}&type=${type}"><i class="fa-solid ${icon}"></i></a>`;
+			},
 		},
 	}),
 );
